@@ -1,0 +1,104 @@
+1. Shading Correction:
+
+Background substraction and flat-flat-correction is been done to restore the photometric accuracy,
+which has been comprimiesed by artifacts and increades pixel values (from bias signal and noise counts)
+
+systematic distortions of the true image can be modeled by using a simple linear shading model with
+components representing local differences in shading and offset:
+
+g(x, y)    =   s(x, y) · f (x, y) + b(x, y)      +   n(x, y)
+
+raw image  =    systematic distortion            +   random distortion
+
+
+with:
+• g(x, y) is the raw pixel value recorded by the CCD camera for pixel (x, y).
+
+• s(x, y) is the shading function, also called flat-field distortion or modulation field combining all
+effects that contribute to a local inhomogeneity of the image intensity due to changes in the
+effective illumination.
+
+• f (x, y) is the true unperturbed image, for example, the concentration of fluorescently labeled
+material or sample density.
+
+• b(x, y) is an offset due to a background signal, dark level or bias and is also called dark-field
+distortion.
+
+• n(x, y) is a noise term that represents random contributions to the acquired image.
+
+
+1.1 flat_field_correction:
+
+The goal of the flat field correction is to recover the true image by subtracting the background from the raw image
+before dividing it by the modulation field. The remaining noise after this methode has to be removed by appling denoising methodes. 
+
+Dark images:
+To charaterize the background, record the first set of images with no illumination (keep the shutter of the CCD camera closed)
+The dark level depends on the duration of the measurment, gain, binning settings, temperature of the detector,ect.
+it is important to keept the same settings for the source image and for the actual measurment. Take the dark image just before or after the source image.
+
+Flat-field imges:
+The shading in the image can be determined by taking a source image of a homogeneouse sample. After adjusting the illumination properly, 
+focus the microscope objective on a plane, where objects are to be examined and then move the microscope stage in lateral (x,y) direction to an empty field of view.
+A number of empty field images should be recored and save them in new a folder which is selected later when creating a new filter.
+
+The modulation field results from the subtraction of the averaged dark field from the averaged flat-field image.
+
+Beware the devision by noisy quantities is numerically instable & zero shading will eliminate information that cannot be recovered.
+
+
+1.2 Retrospective shading correction:
+
+For cases where tha dark and flat-field images can not be recorded and only the raw image can be used.
+The image histogramm can be used to determine a constant offset in the image. 
+The background can be estimated from the dark regions where no sample is present. 
+For an inhomogeneous background it is recommeded to use masked regions (boxes).
+
+boxes are areas that are being used for estimating the flatfield. The average values from the selected patches are used to
+parameterize a two-dimensional linear function: 
+s(x, y) = s1(1 − x)(1 − y) + s2 x(1 − y) + s3(1 − x)y + s4 xy
+
+
+
+2. Noise Removel:
+Due to a lower number of recorded photons in fluoresence microscopy the proper treatment of noise
+has an important role for the interpretation of the images.
+The goal is to improve a single image, by assuming that the systematic average contribution from the noise can be corrected for by background substraction.
+
+2.1 Denoising by Spatial Filters:
+Spatial filter follow the prinicle of selecting a small patch at a given pixel and apply a linear or nonlinear map to the pixel values,
+which returns the new value for the central pixel.
+This is based on the assumtion that the true image varies much less than the noise fluctuations. 
+Therefore we assume that the true image is almost constant over a small image patch.
+For this process a single image is enough.
+
+-Linear filters:
+Linear filters can be understood as a convolution of the raw image with a small patch. 
+The evaluation can be done efficiently in the frequency domain. 
+But since linear filters are convolutions, they have drawbacks like blurry edges for smoothing filters.
+
+scipy_style_uniform
+scipy_style_gauss_2D
+
+skimage_style_gauss_2D
+
+
+-Nonlinear filters: 
+
+scipy_style_median
+
+skimage_style_sobel
+skimage_style_median
+
+
+canny filter
+gauss 
+other_gauss 
+pixelated 
+
+2.2 Denoising by Frequency Filters:
+
+inverse_filter:
+
+The filter is not very robust, since high frequency contributions from noise are boosted.
+
